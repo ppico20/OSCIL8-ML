@@ -8,6 +8,9 @@ __pycache__/
 *.out
 *.log
 *.joblib
+*.pb
+*.data-00000-of-00001
+*.index
 *.pkl
 .DS_Store
 /.DS_Store
