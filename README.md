@@ -7,6 +7,8 @@ This project provides a framework to predict the behaviour of interfacial oscill
 
 Interfacial oscillations are relevant in various engineering applications, including drug delivery and atomisation.
 
+![coupling](https://github.com/ppico20/OSCIL8-ML/blob/master/Sim_setup_int_osc.png)
+
 ## Credits
 
 This project is a collaborative effort between Imperial College London (ICL) and Ecole des Ponts ParisTech (ENPC). The project's contributors are the following:
