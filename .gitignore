@@ -1,0 +1,14 @@
+compiled_data/
+HST_files/
+sim_output/
+ujet_files/
+__pycache__/
+*.csv
+*.png
+*.out
+*.log
+*.joblib
+*.pkl
+.DS_Store
+/.DS_Store
+
