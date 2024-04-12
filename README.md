@@ -75,7 +75,7 @@ OSCIL8-ML/
 
 ## Acknowledgments
 
-- The developers and contributors of PyTorch, Ray Tune, and other open-source libraries used in this framework.
+- The developers and contributors of PyTorch, scikit-learn, and other open-source libraries used in this framework.
 
 ## Credits
 
