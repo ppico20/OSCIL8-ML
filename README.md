@@ -3,6 +3,8 @@
 ## Overview
 This project provides a framework to predict the behaviour of interfacial oscillations driven by gravity and surface tension based on their properties. We provide various scripts that leverage ensemble (XGBoost, Random Forest) and deep (MLP) learning methods to predict interface location, interfacial area, kinetic energy, and interfacial velocity based on only a few dimensionless numbers characterising the system (Bond and Laplace numbers, density and viscosity ratios, and amplitude of initial perturbation). We also use dimensionality reduction techniques to forecast the system’s evolution through image prediction. With this framework, we are able to obtain temporal images of interface motion.
 
+![coupling](https://github.com/ppico20/OSCIL8-ML/blob/master/video.gif)
+
 ## Background and motivation
 
 Interfacial oscillations are relevant in various engineering applications, including drug delivery and atomisation. Under specific conditions, such as large amplitude initial perturbations, a high-velocity jet is ejected from the system. These types of jets are relevant in the environmental sector as they control the exchange of mass between the oceans and the atmosphere. In this project, we make explainable ML predictions of the behaviour of confined interfacial oscillations without the need for high-fidelity CFD simulations.
