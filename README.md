@@ -11,7 +11,7 @@ Interfacial oscillations are relevant in various engineering applications, inclu
 
 ## Dataset
 
-Our dataset used for training, testing, and validation is obtained from 160+ high-fidelity CFD simulations under different operating conditions. For each simulation, we record data of interface location at the centre of the domain (see image below), interfacial area, kinetic energy, and jet velocity in 101 timesteps, leading to 16,000+ data points. We also take 101 images of interface shape for each simulation.
+Our dataset used for training, testing, and validation is obtained from 160+ high-fidelity CFD simulations under different operating conditions. For each simulation, we record data of interface location at various points in the domain (see image below), interfacial area, kinetic energy, and jet velocity in 101 timesteps, leading to 16,000+ data points. We also take 101 images of interface shape for each simulation.
 
 <img src="https://github.com/ppico20/OSCIL8-ML/blob/master/Sim_setup_int_osc.png" width="750" height="320">
 
