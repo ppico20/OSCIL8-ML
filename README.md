@@ -73,9 +73,9 @@ OSCIL8-ML/
 - NumPy
 - Matplotlib
 
-## Acknowledgments
+## Acknowledgement
 
-- The developers and contributors of PyTorch, scikit-learn, and other open-source libraries used in this framework.
+- The developers and contributors of PyTorch, scikit-learn, Keras, SHAP, and other open-source libraries used in this framework.
 
 ## Credits
 
