@@ -43,7 +43,7 @@ num_simulations_test = 152 - num_simulations_train
 sequence_length = 101
 output_dim = 6
 input_dim = 4
-prediction_window = 10
+prediction_window = 20
 num_windows = sequence_length - prediction_window
 
 ################################## Reading csv and Train/test split ##################################
@@ -119,25 +119,25 @@ model = Sequential()
 model.add(LSTM(hidden_size,input_shape=(prediction_window,input_dim),activation='relu'))
 
 model.add(Dense(64))
-#model.add(Dense(100))
+model.add(Dense(100))
 model.add(LeakyReLU(alpha=0.2))
 model.add(Dense(output_dim))
-#model.add(LeakyReLU(alpha=0.2))
+model.add(LeakyReLU(alpha=0.2))
 
 #optimizer = optimizers.Adam()
 optimizer = keras.optimizers.Adam(learning_rate=0.0001)
 model.summary()
 
 model.compile(loss='mse', optimizer='adam', metrics=['mse'])
-history = model.fit(input_seq_train , output_seq_train, validation_split=0.05, epochs = 10,batch_size=64,verbose=2)
+history = model.fit(input_seq_train , output_seq_train, validation_split=0.05, epochs = 20,batch_size=64,verbose=2)
 
 # #################################### Evaluate model ##############################################################
 
 # predicted_parameters = model.predict(input_seq_train[0:10,:,:].reshape(10,prediction_window,input_dim))
 # print(predicted_parameters)
 
-y_pred_train = model.predict(input_seq_train.reshape(-1,prediction_window,input_dim))
-y_pred_test = model.predict(input_seq_test.reshape(-1,prediction_window,input_dim))
+y_pred_train = model.predict(input_seq_train)
+y_pred_test = model.predict(input_seq_test)
 
 print('############ Performance metrics in training set ################')
 print("Coefficient of determination, r2 = %.5f" % r2_score(output_seq_train, y_pred_train))
