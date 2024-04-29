@@ -58,29 +58,29 @@ test_cases = unique_cases[num_simulations_train:]
 train_set = dataset[dataset['Run_ID'].isin(train_cases)]
 test_set = dataset[dataset['Run_ID'].isin(test_cases)]
 
-X_train = train_set[['Time_tilde','epsilon','rho_r','mu_r','La_l','Bo_l']]
-X_test = test_set[['Time_tilde','epsilon','rho_r','mu_r','La_l','Bo_l']]
-Y_train = train_set[['ak0_tilde','ak1_tilde','ak2_tilde','ak3_tilde']]
-Y_test = test_set[['ak0_tilde','ak1_tilde','ak2_tilde','ak3_tilde']]
+X_train = train_set[['ak0_tilde','ak1_tilde','ak2_tilde','ak3_tilde']]
+X_test = test_set[['ak0_tilde','ak1_tilde','ak2_tilde','ak3_tilde']]
+Y_train = train_set[['Time_tilde','epsilon','rho_r','mu_r','La_l','Bo_l']]
+Y_test = test_set[['Time_tilde','epsilon','rho_r','mu_r','La_l','Bo_l']]
 
 ################################## Selecting input/output variables ##################################
 
-output_parameters_train = train_set[['Time_tilde','epsilon','rho_r','mu_r','La_l','Bo_l']]
 scaler = preprocessing.MinMaxScaler()
-scaler.fit(output_parameters_train)
+scaler.fit(Y_train)
+Y_train_scaled = scaler.transform(Y_train)
+Y_test_scaled = scaler.transform(Y_test)
 
-output_parameters_train_scaled = scaler.transform(output_parameters_train)
-output_train_scaled = output_parameters_train_scaled.reshape(num_simulations_train,sequence_length,output_dim)
+Y_train_scaled = Y_train_scaled.reshape(num_simulations_train,sequence_length,output_dim)
+Y_test_scaled = Y_test_scaled.reshape(num_simulations_test,sequence_length,output_dim)
 
-input_train = train_set[['ak0_tilde','ak1_tilde','ak2_tilde','ak3_tilde']]
-input_train = input_train.values
-input_train_values = input_train.reshape(num_simulations_train,sequence_length,input_dim)
+X_train = X_train.values.reshape(num_simulations_train,sequence_length,input_dim)
+X_test = X_test.values.reshape(num_simulations_test,sequence_length,input_dim)
 
 ################################## Creating input sequences ##################################
 
-def create_input_seq(input_data):
+def create_input_seq(input_data,num_simulations):
   input_seq = np.zeros((1,prediction_window,input_dim))
-  for i in range(num_simulations_train):
+  for i in range(num_simulations):
     current_traj = input_data[i,:,:]
 
     for start in range(num_windows):
@@ -89,22 +89,24 @@ def create_input_seq(input_data):
   input_seq = input_seq[1:,:,:]
   return input_seq
    
-input_seq_train = create_input_seq(input_train_values)
+input_seq_train = create_input_seq(X_train,num_simulations_train)
+input_seq_test = create_input_seq(X_test,num_simulations_test)
 print(input_seq_train.shape)
 
 ################################## Creating output sequences ##################################
 
-def create_output_seq(output_data):
-  output_seq = np.zeros((num_simulations_train * (sequence_length - prediction_window), output_dim))
+def create_output_seq(output_data,num_simulations):
+  output_seq = np.zeros((num_simulations * (sequence_length - prediction_window), output_dim))
   index = 0
-  for i in range(num_simulations_train):
+  for i in range(num_simulations):
     for j in range(num_windows):
         shifted_values = output_data[i, j : j + prediction_window, :]
         output_seq[index] = shifted_values[0]
         index += 1
   return output_seq
 
-output_seq_train = create_output_seq(output_train_scaled)
+output_seq_train = create_output_seq(Y_train_scaled,num_simulations_train)
+output_seq_test = create_output_seq(Y_test_scaled,num_simulations_test)
 print(output_seq_train.shape)
 
 ################################## LSTM ##################################
@@ -131,13 +133,20 @@ history = model.fit(input_seq_train , output_seq_train, validation_split=0.05, e
 
 # #################################### Evaluate model ##############################################################
 
-predicted_parameters = model.predict(input_seq_train[0:10,:,:].reshape(10,prediction_window,input_dim))
-print(predicted_parameters)
+# predicted_parameters = model.predict(input_seq_train[0:10,:,:].reshape(10,prediction_window,input_dim))
+# print(predicted_parameters)
 
 y_pred_train = model.predict(input_seq_train.reshape(-1,prediction_window,input_dim))
+y_pred_test = model.predict(input_seq_test.reshape(-1,prediction_window,input_dim))
 
 print('############ Performance metrics in training set ################')
 print("Coefficient of determination, r2 = %.5f" % r2_score(output_seq_train, y_pred_train))
 print("Mean Absolute Error, MAE = %.5f" % mean_absolute_error(output_seq_train, y_pred_train))
 print("Mean squared error, MSE = %.5f" % mean_squared_error(output_seq_train, y_pred_train))
 print("Explained Variance Score = %.5f" % explained_variance_score(output_seq_train, y_pred_train))
+
+print('############ Performance metrics in testing set ################')
+print("Coefficient of determination, r2 = %.5f" % r2_score(output_seq_test, y_pred_test))
+print("Mean Absolute Error, MAE = %.5f" % mean_absolute_error(output_seq_test, y_pred_test))
+print("Mean squared error, MSE = %.5f" % mean_squared_error(output_seq_test, y_pred_test))
+print("Explained Variance Score = %.5f" % explained_variance_score(output_seq_test, y_pred_test))
