@@ -23,6 +23,7 @@ from tensorflow import keras
 from tensorflow.keras.layers import Input, Dense, Convolution2D, MaxPooling2D, UpSampling2D,Cropping2D, AveragePooling2D,Dense,Flatten,Reshape,Dropout,TimeDistributed,LSTM,LeakyReLU,RepeatVector
 from tensorflow.keras.models import Model,Sequential
 import tensorflow as tf
+from tensorflow_addons.metrics import RSquare
 
 tf.config.threading.set_inter_op_parallelism_threads(1)
 tf.config.threading.set_intra_op_parallelism_threads(1)
@@ -109,32 +110,28 @@ output_seq_train = create_output_seq(Y_train_scaled,num_simulations_train)
 output_seq_test = create_output_seq(Y_test_scaled,num_simulations_test)
 print(output_seq_train.shape)
 
-################################## LSTM ##################################
+################################## Creating LSTM model ##################################
 
-hidden_size = 100
-use_dropout = True
+def create_model(hidden_size = 100,learning_rate=0.0001,optimizer=keras.optimizers.Adam):
+  """
+  This function creates the general structure of the network with default hyperparameter values
+  """
+  model = Sequential()
+  model.add(LSTM(hidden_size,input_shape=(prediction_window,input_dim),activation='relu'))
+  model.add(Dense(64))
+  model.add(Dense(100))
+  model.add(LeakyReLU(alpha=0.2))
+  model.add(Dense(output_dim))
+  model.add(LeakyReLU(alpha=0.2))
+  model.summary()
 
-model = Sequential()
+  model.compile(loss='mean_squared_error', optimizer=optimizer(learning_rate=learning_rate), metrics=[RSquare()])
+  return model
 
-model.add(LSTM(hidden_size,input_shape=(prediction_window,input_dim),activation='relu'))
-
-model.add(Dense(64))
-model.add(Dense(100))
-model.add(LeakyReLU(alpha=0.2))
-model.add(Dense(output_dim))
-model.add(LeakyReLU(alpha=0.2))
-
-#optimizer = optimizers.Adam()
-optimizer = keras.optimizers.Adam(learning_rate=0.0001)
-model.summary()
-
-model.compile(loss='mse', optimizer='adam', metrics=['mse'])
+model = create_model()
 history = model.fit(input_seq_train , output_seq_train, validation_split=0.05, epochs = 20,batch_size=64,verbose=2)
 
 # #################################### Evaluate model ##############################################################
-
-# predicted_parameters = model.predict(input_seq_train[0:10,:,:].reshape(10,prediction_window,input_dim))
-# print(predicted_parameters)
 
 y_pred_train = model.predict(input_seq_train)
 y_pred_test = model.predict(input_seq_test)
