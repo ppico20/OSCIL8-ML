@@ -38,35 +38,42 @@ tf.config.threading.set_intra_op_parallelism_threads(1)
 # redirect_stdout_to_log(log_file)
 
 ############################################################
-
-num_simulations = 152
+num_simulations_train = 120
 sequence_length = 101
 output_dim = 6
-input_dim = 1
-prediction_window = 20
+input_dim = 4
+prediction_window = 10
 num_windows = sequence_length - prediction_window
 
-################################## Reading csv ##################################
+################################## Reading csv and Train/test split ##################################
 
 dataset = pd.read_csv("../../../compiled_data/data_params_HST.csv", engine='python')
-parameters_train = dataset[['Time_tilde','epsilon','rho_r','mu_r','La_l','Bo_l']]
+unique_cases = dataset['Run_ID'].unique()
+np.random.seed(42)
+np.random.shuffle(unique_cases)
 
+train_cases = unique_cases[:num_simulations_train]
+test_cases = unique_cases[num_simulations_train:]
+train_set = dataset[dataset['Run_ID'].isin(train_cases)]
+test_set = dataset[dataset['Run_ID'].isin(test_cases)]
+
+################################## Selecting input/output variables ##################################
+
+parameters_train = train_set[['Time_tilde','epsilon','rho_r','mu_r','La_l','Bo_l']]
 scaler = preprocessing.MinMaxScaler()
 scaler.fit(parameters_train)
 
 parameters_train_scaled = scaler.transform(parameters_train)
+train_parameter = parameters_train_scaled.reshape(num_simulations_train,sequence_length,output_dim)
 
-#parameters_train_scaled = parameters_train.values
-train_parameter = parameters_train_scaled.reshape(num_simulations,sequence_length,output_dim)
-
-ak0_tilde_train = dataset[['ak0_tilde']]
+ak0_tilde_train = train_set[['ak0_tilde','ak1_tilde','ak2_tilde','ak3_tilde']]
 ak0_tilde_train = ak0_tilde_train.values
-ak0_in = ak0_tilde_train.reshape(num_simulations,sequence_length,input_dim)
+ak0_in = ak0_tilde_train.reshape(num_simulations_train,sequence_length,input_dim)
 
-############################################################
+################################## Creating input sequence ##################################
 
 input_seq = np.zeros((1,prediction_window,input_dim))
-for i in range(num_simulations):
+for i in range(num_simulations_train):
   current_traj = ak0_in[i,:,:]
 
   for start in range(num_windows):
@@ -75,20 +82,20 @@ for i in range(num_simulations):
 input_seq = input_seq[1:,:,:]
 print(input_seq.shape)
 
-############################################################
+################################## Creating output sequence ##################################
 
-train_parameter_shifted = np.zeros((num_simulations * (sequence_length - prediction_window), output_dim))
+output_seq = np.zeros((num_simulations_train * (sequence_length - prediction_window), output_dim))
 
 index = 0
-for i in range(num_simulations):
+for i in range(num_simulations_train):
     for j in range(num_windows):
         shifted_parameters = train_parameter[i, j : j + prediction_window, :]
-        train_parameter_shifted[index] = shifted_parameters[0]
+        output_seq[index] = shifted_parameters[0]
         index += 1
 
-print(train_parameter_shifted.shape)
+print(output_seq.shape)
 
-################################################################
+################################## LSTM ##################################
 
 hidden_size = 100
 use_dropout = True
@@ -104,11 +111,21 @@ model.add(Dense(output_dim))
 #model.add(LeakyReLU(alpha=0.2))
 
 #optimizer = optimizers.Adam()
-optimizer = keras.optimizers.Adam(learning_rate=0.001)
+optimizer = keras.optimizers.Adam(learning_rate=0.0001)
 model.summary()
 
 model.compile(loss='mse', optimizer='adam', metrics=['mse'])
-history = model.fit(input_seq , train_parameter_shifted, validation_split=0.05, epochs=10,batch_size=64,verbose=2)
+history = model.fit(input_seq , output_seq, validation_split=0.05, epochs = 10,batch_size=64,verbose=2)
 
-predicted_parameters = model.predict(input_seq[0,:,:].reshape(1,prediction_window,1))
+# #################################### Evaluate model ##############################################################
+
+predicted_parameters = model.predict(input_seq[0:10,:,:].reshape(10,prediction_window,input_dim))
 print(predicted_parameters)
+
+y_pred_train = model.predict(input_seq.reshape(-1,prediction_window,input_dim))
+
+print('############ Performance metrics in training set ################')
+print("Coefficient of determination, r2 = %.5f" % r2_score(output_seq, y_pred_train))
+print("Mean Absolute Error, MAE = %.5f" % mean_absolute_error(output_seq, y_pred_train))
+print("Mean squared error, MSE = %.5f" % mean_squared_error(output_seq, y_pred_train))
+print("Explained Variance Score = %.5f" % explained_variance_score(output_seq, y_pred_train))
